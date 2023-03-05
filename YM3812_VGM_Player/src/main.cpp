@@ -2,6 +2,12 @@
 #include "SdFat-beta.h"
 #include "OPL2.h"
 
+#define FEATURE_DEBOUNCE_KEY_EVENT
+#ifdef FEATURE_DEBOUNCE_KEY_EVENT
+#include <Bounce2.h> 
+#define BUTTON_DEBOUNCE_PERIOD 20 //ms
+#endif
+
 const char *SDFAT_ver = SD_FAT_VERSION;
 
 // Use built-in SD for SPI modes on Teensy 3.5/3.6.
@@ -38,6 +44,15 @@ const int next_btn = 2;
 const int loop_btn = 3;
 const int shuf_btn = 4;
 
+#ifdef FEATURE_DEBOUNCE_KEY_EVENT
+Bounce _prev_btn = Bounce();
+Bounce _rand_btn = Bounce();
+Bounce _next_btn = Bounce();
+Bounce _loop_btn = Bounce();
+Bounce _shuf_btn = Bounce();
+#endif
+const int LED_PIN = 13;
+
 SdFat32 SD;
 File32 vgm;
 
@@ -58,7 +73,6 @@ playback_list name_list[256];
 unsigned char cmd = 0;
 int numberOfFiles = 0;
 int32_t currentFileNumber = 0;
-
 
 //Timing Variables
 float singleSampleWait = 0;
@@ -376,6 +390,7 @@ void StartupSequence(StartUpProfile sup, String request = "")
     }
   }
   delay(1000);
+  digitalWrite(LED_PIN, HIGH);
 }
 
 void unsupportedCode(byte b) {
@@ -394,7 +409,15 @@ void setup()
     pinMode(next_btn, INPUT_PULLUP);
     pinMode(loop_btn, INPUT_PULLUP);
     pinMode(shuf_btn, INPUT_PULLUP);
-    
+#ifdef FEATURE_DEBOUNCE_KEY_EVENT
+    _prev_btn.attach(prev_btn);  _prev_btn.interval(BUTTON_DEBOUNCE_PERIOD);
+    _rand_btn.attach(rand_btn);  _rand_btn.interval(BUTTON_DEBOUNCE_PERIOD);
+    _next_btn.attach(next_btn);  _next_btn.interval(BUTTON_DEBOUNCE_PERIOD);
+    _loop_btn.attach(loop_btn);  _loop_btn.interval(BUTTON_DEBOUNCE_PERIOD);
+    _shuf_btn.attach(shuf_btn);  _shuf_btn.interval(BUTTON_DEBOUNCE_PERIOD);
+#endif
+    pinMode(LED_PIN, OUTPUT);
+
     opl2.begin();
     if(!SD.begin(SdioConfig(FIFO_SDIO))){
         Serial.println("Card Mount Failed");
@@ -456,18 +479,42 @@ void loop()
       break;
     }
   }
+#ifdef FEATURE_DEBOUNCE_KEY_EVENT
+  if(_next_btn.update() && _next_btn.read() == LOW)
+#else
   if(!digitalRead(next_btn))
+#endif  
     StartupSequence(NEXT);
+
+#ifdef FEATURE_DEBOUNCE_KEY_EVENT
+  if(_prev_btn.update() && _prev_btn.read() == LOW)
+#else
   if(!digitalRead(prev_btn))
+#endif 
     StartupSequence(PREVIOUS);
+
+#ifdef FEATURE_DEBOUNCE_KEY_EVENT
+  if(_rand_btn.update() && _rand_btn.read() == LOW)
+#else
   if(!digitalRead(rand_btn))
+#endif 
     StartupSequence(RNG);
+
+#ifdef FEATURE_DEBOUNCE_KEY_EVENT
+  if(_shuf_btn.update() && _shuf_btn.read() == LOW)
+#else
   if(!digitalRead(shuf_btn))
+#endif 
   {
     playMode == SHUFFLE ? playMode = IN_ORDER : playMode = SHUFFLE;
     playMode == SHUFFLE ? Serial.println("SHUFFLE ON") : Serial.println("SHUFFLE OFF");
   }
-  if(!digitalRead(loop_btn)){
+#ifdef FEATURE_DEBOUNCE_KEY_EVENT
+  if(_loop_btn.update() && _loop_btn.read() == LOW)
+#else
+  if(!digitalRead(loop_btn))
+#endif 
+  {
     playMode == LOOP ? playMode = IN_ORDER : playMode = LOOP;
     playMode == LOOP ? Serial.println("LOOP ON") : Serial.println("LOOP OFF");   
   }
@@ -571,6 +618,7 @@ void loop()
       vgm.seek(loopOffset-0x1C);
       FillBuffer();
       bufferPos = 0;
+      digitalWrite(LED_PIN, LOW);
       Serial.println("CODE_END_OF_DATA");
       break;
       
