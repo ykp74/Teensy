@@ -8,7 +8,7 @@
 #define BUTTON_DEBOUNCE_PERIOD 20 //ms
 #endif
 
-const char *SDFAT_ver = SD_FAT_VERSION;
+//const char *SDFAT_ver = SD_FAT_VERSION;
 
 // Use built-in SD for SPI modes on Teensy 3.5/3.6.
 // Teensy 4.0 use first SPI port.
@@ -101,11 +101,11 @@ String systemName;
 String gameDate;
 
 enum StartUpProfile {
-  FIRST_START, 
-  NEXT, 
-  PREVIOUS, 
-  RNG, 
-  REQUEST
+    FIRST_START, 
+    NEXT, 
+    PREVIOUS, 
+    RNG, 
+    REQUEST
 };
 
 #ifdef FEATURE_SUPPORT_IMF
@@ -114,28 +114,28 @@ float imfSpeed;
 long songLength = 0;
 
 void imf_loadSong(char* fileName) {
-  imfFile = SD.open(fileName, FILE_READ);
-  imfFile.seek(0);
+    imfFile = SD.open(fileName, FILE_READ);
+    imfFile.seek(0);
 
-  songLength  = imfFile.read();
-  songLength += imfFile.read() << 8;
-  if (songLength == 0) {
-    songLength = 65535;
-    imfFile.seek(4);
+    songLength  = imfFile.read();
+    songLength += imfFile.read() << 8;
+    if (songLength == 0) {
+        songLength = 65535;
+        imfFile.seek(4);
+    }
   }
-}
 
 int imf_playSong(void) {
-  byte reg  = imfFile.read();
-  byte data = imfFile.read();
-  float  wait = imfFile.read();
-  wait += imfFile.read() << 8;
+    byte reg  = imfFile.read();
+    byte data = imfFile.read();
+    float  wait = imfFile.read();
+    wait += imfFile.read() << 8;
 
-  if (reg != 0x00) {
-    opl2.write(reg, data);
-  }
-  songLength -= 3;
-  return round(wait * (1000 / imfSpeed));
+    if (reg != 0x00) {
+        opl2.write(reg, data);
+    }
+    songLength -= 3;
+    return round(wait * (1000 / imfSpeed));
 }
 #endif /* FEATURE_SUPPORT_IMF */
 
@@ -147,45 +147,45 @@ void FillBuffer()
 
 unsigned char GetByte()
 {
-  if(bufferPos == MAX_CMD_BUFFER){
-    bufferPos = 0;
-    FillBuffer();
-  }
-  return cmdBuffer[bufferPos++];
+    if(bufferPos == MAX_CMD_BUFFER){
+      bufferPos = 0;
+      FillBuffer();
+    }
+    return cmdBuffer[bufferPos++];
 }
 
 uint32_t ReadBuffer32() //Read 32 bit value from buffer
 {
-  byte v0 = GetByte();
-  byte v1 = GetByte();
-  byte v2 = GetByte();
-  byte v3 = GetByte();
-  return uint32_t(v0 + (v1 << 8) + (v2 << 16) + (v3 << 24));
+    byte v0 = GetByte();
+    byte v1 = GetByte();
+    byte v2 = GetByte();
+    byte v3 = GetByte();
+    return uint32_t(v0 + (v1 << 8) + (v2 << 16) + (v3 << 24));
 }
 
  //Read 32 bit value straight from SD card
 uint32_t ReadSD32()
 {
-  byte v0 = vgm.read();
-  byte v1 = vgm.read();
-  byte v2 = vgm.read();
-  byte v3 = vgm.read();
-  return uint32_t(v0 + (v1 << 8) + (v2 << 16) + (v3 << 24));
+    byte v0 = vgm.read();
+    byte v1 = vgm.read();
+    byte v2 = vgm.read();
+    byte v3 = vgm.read();
+    return uint32_t(v0 + (v1 << 8) + (v2 << 16) + (v3 << 24));
 }
 
 void ClearBuffers()
 {
-  bufferPos = 0;
-  for(int i = 0; i <= MAX_CMD_BUFFER; i++)
-    cmdBuffer[i] = 0;
+    bufferPos = 0;
+    for(uint i = 0; i <= MAX_CMD_BUFFER; i++)
+        cmdBuffer[i] = 0;
 }
 
 void ClearTrackData()
 {
-  trackTitle = "";
-  gameName = "";
-  systemName = "";
-  gameDate = "";
+    trackTitle = "";
+    gameName = "";
+    systemName = "";
+    gameDate = "";
 }
 
 uint32_t EoFOffset = 0;
@@ -213,7 +213,7 @@ void GetHeaderData() //Scrape off the important VGM data from the header, then d
   // Serial.print("DATA LENGTH: ");
   // Serial.println(dataLength);
 
-  for(int i = 0; i<dataLength; i++) //Convert 16-bit characters to 8 bit chars. This may cause issues with non ASCII characters. (IE Japanese chars.)
+  for(uint i = 0; i<dataLength; i++) //Convert 16-bit characters to 8 bit chars. This may cause issues with non ASCII characters. (IE Japanese chars.)
   {
     char c1 = vgm.read();
     char c2 = vgm.read();
@@ -281,7 +281,7 @@ void GetHeaderData() //Scrape off the important VGM data from the header, then d
     ReadBuffer32(); ReadBuffer32();
   } else {
     Serial.println("VGM spec 1.7+");
-    for(int i = 0; i < vgmDataOffset-4; i++) {
+    for(uint i = 0; i < vgmDataOffset-4; i++) {
       GetByte();  //VGM starts at different data position (Probably VGM spec 1.7+)
     }
   }
@@ -292,111 +292,116 @@ void GetHeaderData() //Scrape off the important VGM data from the header, then d
 
 void StartupSequence(StartUpProfile sup, String request = "")
 {
-  ClearTrackData();
+    uint16_t randomFile = currentFileNumber;
+    bool fileFound = false;
 
-  switch(sup){
-    case FIRST_START:
-      currentFileNumber = 0;
-      Serial.println("FIRST_START event");
-      break;
+    ClearTrackData();
 
-    case NEXT:
-      if(currentFileNumber+1 >= numberOfFiles) {
-          currentFileNumber = 0;
-      } else {
-          currentFileNumber++;
-      }
-      Serial.println("NEXT event");
-      break;
+    switch(sup){
+        case FIRST_START:
+            currentFileNumber = 0;
+            Serial.println("FIRST_START event");
+            break;
+
+        case NEXT:
+            if(currentFileNumber+1 >= numberOfFiles) {
+                currentFileNumber = 0;
+            } else {
+                currentFileNumber++;
+            }
+            Serial.println("NEXT event");
+            break;
+        
+        case PREVIOUS:
+            if(currentFileNumber != 0){
+                currentFileNumber--;
+            } else {
+                currentFileNumber = numberOfFiles-1;
+            }
+            Serial.println("PREVIOUS event");
+            break;
     
-    case PREVIOUS:
-      if(currentFileNumber != 0){
-          currentFileNumber--;
-      } else {
-          currentFileNumber = numberOfFiles-1;
-      }
-      Serial.println("PREVIOUS event");
-      break;
-    
-    case RNG:
-    {
-      randomSeed(micros());
-      uint16_t randomFile = currentFileNumber;
-      while(randomFile == currentFileNumber)
-        randomFile = random(numberOfFiles-1);
-      currentFileNumber = randomFile;
-      Serial.println("RNG event");
-      break;
+        case RNG:
+            randomSeed(micros());
+            while(randomFile == currentFileNumber)
+                randomFile = random(numberOfFiles-1);
+            currentFileNumber = randomFile;
+            Serial.println("RNG event");
+            break;
+
+        case REQUEST:
+            Serial.print("REQUEST: ");Serial.println(request);
+            for(int i = 0; i<numberOfFiles; i++) {
+                String tmpFN = String(fileName);
+                tmpFN.trim();
+                if(tmpFN == request.trim()){
+                    currentFileNumber = i;
+                    fileFound = true;
+                    break;
+                }
+            }
+            if(fileFound) {
+                Serial.println("File found!");
+            } else {
+                Serial.println("ERROR: File not found! Continuing with current song.");
+                return;
+            }
+            Serial.println("REQUEST event");
+            break;
+        
+        default:
+            break;
     }
-    case REQUEST:
-    {
-      bool fileFound = false;
-      Serial.print("REQUEST: ");Serial.println(request);
-      for(int i = 0; i<numberOfFiles; i++) {
-        String tmpFN = String(fileName);
-        tmpFN.trim();
-        if(tmpFN == request.trim()){
-          currentFileNumber = i;
-          fileFound = true;
-          break;
-        }
-      }
-      if(fileFound) {
-        Serial.println("File found!");
-      } else {
-        Serial.println("ERROR: File not found! Continuing with current song.");
-        return;
-      }
-      Serial.println("REQUEST event");
-      break;
+
+    opl2.begin();
+    waitSamples = 0;
+    loopOffset = 0;
+    lastWaitData61 = 0;
+    cachedWaitTime61 = 0;
+    pauseTime = 0;
+    startTime = 0;
+    loopCount = 0;
+    cmd = 0;
+    ClearBuffers();
+  
+    Serial.print("Current file number: "); Serial.print(currentFileNumber+1); Serial.print("/"); Serial.println(numberOfFiles);
+  
+    if(vgm.isOpen()){
+        vgm.close();
     }
-  }
 
-  opl2.begin();
-  waitSamples = 0;
-  loopOffset = 0;
-  lastWaitData61 = 0;
-  cachedWaitTime61 = 0;
-  pauseTime = 0;
-  startTime = 0;
-  loopCount = 0;
-  cmd = 0;
-  ClearBuffers();
-  
-  Serial.print("Current file number: "); Serial.print(currentFileNumber+1); Serial.print("/"); Serial.println(numberOfFiles);
-  
-  if(vgm.isOpen()){
-    vgm.close();
-  }
-
-  vgm = SD.open(name_list[currentFileNumber+1].fileName, FILE_READ);
-  if(!vgm){
-    Serial.println("File open failed!");
-  } else {
-    Serial.println("Opened successfully...");
-  }
-  FillBuffer();
-  GetHeaderData();
-  
-  singleSampleWait = ((1000.0 / (sampleRate/(float)1))*1000);
-
-  for(int i = 0; i<16; i++) {
-    if(i == 0) {
-      preCalced8nDelays[i] = 0;
-      preCalced7nDelays[i] = 1;
+    vgm = SD.open(name_list[currentFileNumber+1].fileName, FILE_READ);
+    if(!vgm){
+        Serial.println("File open failed!");
     } else {
-      preCalced8nDelays[i] = ((1000.0 / (sampleRate/(float)i))*1000);
-      preCalced7nDelays[i] = ((1000.0 / (sampleRate/(float)i+1))*1000);
+        Serial.println("Opened successfully...");
     }
-  }
-  delay(1000);
-  digitalWrite(LED_PIN, HIGH);
+    FillBuffer();
+    GetHeaderData();
+  
+    singleSampleWait = ((1000.0 / (sampleRate/(float)1))*1000);
+
+    for(int i = 0; i<16; i++) {
+        if(i == 0) {
+            preCalced8nDelays[i] = 0;
+            preCalced7nDelays[i] = 1;
+        } else {
+            preCalced8nDelays[i] = ((1000.0 / (sampleRate/(float)i))*1000);
+            preCalced7nDelays[i] = ((1000.0 / (sampleRate/(float)i+1))*1000);
+        }
+    }
+    delay(1000);
 }
 
-void unsupportedCode(byte b) {
-  char buf[50];
-  sprintf(buf, "Unsupported code 0x%02X offset 0x%08lX", b, vgm.position() - 1);
-  Serial.println(buf);
+// void unsupportedCode(byte b) {
+//     char buf[50];
+//     sprintf(buf, "Unsupported code 0x%02X offset 0x%08lX", b, vgm.position() - 1);
+//     Serial.println(buf);
+// }
+
+// Soft Reset 함수
+void softReset() {
+    SCB_AIRCR = 0x05FA0004;  // Write the reset value to the AIRCR register
 }
 
 void setup()
@@ -416,9 +421,11 @@ void setup()
     _loop_btn.attach(loop_btn);  _loop_btn.interval(BUTTON_DEBOUNCE_PERIOD);
     _shuf_btn.attach(shuf_btn);  _shuf_btn.interval(BUTTON_DEBOUNCE_PERIOD);
 #endif
-    pinMode(LED_PIN, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT);  // 내장 LED 핀(13번)을 출력 모드로 설정
+    digitalWrite(LED_BUILTIN, HIGH);
 
     opl2.begin();
+
     if(!SD.begin(SdioConfig(FIFO_SDIO))){
         Serial.println("Card Mount Failed");
         return;
@@ -455,28 +462,33 @@ void loop()
     {
       case '+': //Next song
         StartupSequence(NEXT);
-      break;
+        break;
       case '-': //Previous Song
         StartupSequence(PREVIOUS);
-      break;
+        break;
       case '*': //Pick random song
         StartupSequence(RNG);
-      break;
+        break;
       case '/': //Toggle shuffle mode
         playMode == SHUFFLE ? playMode = IN_ORDER : playMode = SHUFFLE;
         playMode == SHUFFLE ? Serial.println("SHUFFLE ON") : Serial.println("SHUFFLE OFF");
         //DrawOledPage();
-      break;
+        break;
       case '.': //Toggle loop mode
         playMode == LOOP ? playMode = IN_ORDER : playMode = LOOP;
         playMode == LOOP ? Serial.println("LOOP ON") : Serial.println("LOOP OFF");
         //DrawOledPage();
-      break;
+        break;
+      case 'R':
+        Serial.println("Soft Reset!!");
+        delay(150);
+        softReset();
+        break;
       case 'r': //Song Request, format:  r:mySongFileName.vgm - An attempt will be made to find and open that file.
         String req = USBorBluetooh ? Serial.readString(1024) : Serial2.readString(1024);
         req.remove(0, 1); //Remove colon character
         StartupSequence(REQUEST, req);
-      break;
+        break;
     }
   }
 #ifdef FEATURE_DEBOUNCE_KEY_EVENT
@@ -618,12 +630,10 @@ void loop()
       vgm.seek(loopOffset-0x1C);
       FillBuffer();
       bufferPos = 0;
-      digitalWrite(LED_PIN, LOW);
       Serial.println("CODE_END_OF_DATA");
       break;
       
     default:
       break;
-
   }
 }
