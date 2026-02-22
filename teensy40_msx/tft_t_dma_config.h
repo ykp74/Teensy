@@ -6,7 +6,7 @@
 #define TFT_LINEARINT  1
 #define LINEARINT_HACK 1
 
-//ykp74 revert screen indicator
+//ykp74 revert screen indicator 
 #define FLIP_SCREEN    1
 //#define TFT_DEBUG      1
 #if defined(__IMXRT1052__) || defined(__IMXRT1062__)    

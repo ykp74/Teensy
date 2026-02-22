@@ -33,10 +33,18 @@
 
 
 #ifdef TFT_STATICFB
+/* RAM2(DMAMEM)에 배치해 RAM1 부족 방지 - 약 150KB 절약 */
+#if defined(__IMXRT1052__) || defined(__IMXRT1062__)
+DMAMEM static uint16_t fb0[LINES_PER_BLOCK*TFT_WIDTH];
+DMAMEM static uint16_t fb1[LINES_PER_BLOCK*TFT_WIDTH];
+DMAMEM static uint16_t fb2[LINES_PER_BLOCK*TFT_WIDTH];
+DMAMEM static uint16_t fb3[(TFT_HEIGHT-3*LINES_PER_BLOCK)*TFT_WIDTH];
+#else
 static uint16_t fb0[LINES_PER_BLOCK*TFT_WIDTH];
 static uint16_t fb1[LINES_PER_BLOCK*TFT_WIDTH];
 static uint16_t fb2[LINES_PER_BLOCK*TFT_WIDTH];
 static uint16_t fb3[(TFT_HEIGHT-3*LINES_PER_BLOCK)*TFT_WIDTH];
+#endif
 static uint16_t * blocks[NR_OF_BLOCK]={fb0,fb1,fb2,fb3};
 #else
 static uint16_t * blocks[NR_OF_BLOCK];

@@ -235,7 +235,7 @@ void loop(void)
       tft.fillScreenNoDma( RGBVAL16(0x00,0x00,0x00) );
       tft.startDMA(); 
       //ykp74 myTimer.begin(vblCount, 40000);  //to run every 40ms  
-      myTimer.begin(vblCount, 20000);  //to run every 20ms  
+      myTimer.begin(vblCount, 17500);  //to run every 20ms  
     }    
     else if (action == ACTION_RUNVGA)  {   
 #ifdef HAS_VGA
@@ -289,12 +289,13 @@ AudioPlaySystem mymixer;
 #ifndef HAS_T4_VGA
 #include <Audio.h>
 #if defined(__IMXRT1052__) || defined(__IMXRT1062__)    
-//AudioOutputMQS  mqs;
-//AudioConnection patchCord9(mymixer, 0, mqs, 1);
-AudioOutputI2S  i2s1;
-AudioConnection patchCord8(mymixer, 0, i2s1, 0);
-AudioConnection patchCord9(mymixer, 0, i2s1, 1);
-AudioControlSGTL5000     sgtl5000_1;
+//ykp_temp_fix  for output to MQS
+AudioOutputMQS  mqs;
+AudioConnection patchCord9(mymixer, 0, mqs, 1);
+//AudioOutputI2S  i2s1;
+//AudioConnection patchCord8(mymixer, 0, i2s1, 0);
+//AudioConnection patchCord9(mymixer, 0, i2s1, 1);
+//AudioControlSGTL5000     sgtl5000_1;
 #else
 AudioOutputAnalog dac1;
 AudioConnection   patchCord1(mymixer, dac1);
